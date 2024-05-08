@@ -1,0 +1,945 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>Chess</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="scacchi.css">
+
+</head>
+
+<body>
+    <div class="chessboardContainer">
+        <div id="chessboard"></div>
+        <div id="letters"></div>
+        <div id="numbers"></div>
+
+
+        <div id="timerContainer" class="hide">
+            <div id="timerB" class="timer">
+                <div class="timeContainer">
+                    <h1 id="minB" class="time"></h1>
+                    <h1 id="secB" class="time" style="width: 90px;"></h1>
+                </div>
+            </div>
+            <div id="timerW" class="timer">
+                <div class="timeContainer">
+                    <h1 id="minW" class="time"></h1>
+                    <h1 id="secW" class="time" style="width: 90px;"></h1>
+                </div>
+
+            </div>
+        </div>
+
+    </div>
+
+    <div class="bar" id="bar">
+        <div class="arrow" id="arrow">
+            <svg xmlns="http://www.w3.org/2000/svg" style="width: 33px; height: 13px;">
+                <path
+                    style="fill:none;stroke:white;stroke-width:9.265;stroke-linecap:round;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1;scale:0.3"
+                    d="M 4.6325002,4.6325002 50.914842,31.35362 98.440246,4.6325002" />
+            </svg>
+        </div>
+
+        <div class="containerAllCheckbox">
+            <label class="containerCheckBox">
+                <p style="margin-left: 15px; margin-top: 4px;">Multiplayer online</p>
+            </label>
+
+            <label class="containerCheckBox">
+                <p style="margin-left: 35px; margin-top: 4px;">Multiplayer offline</p>
+                <input type="checkbox" id="checkboxReverse">
+                <span class="checkmark"></span>
+            </label>
+
+            <label class="containerCheckBox">
+                <p style="margin-left: 35px; margin-top: 4px;">Timed Game</p>
+                <input type="checkbox" id="checkboxTimedGame">
+                <span class="checkmark"></span>
+            </label>
+        </div>
+
+    </div>
+
+
+    <div class="timerAlertContainer hide">
+        <button style="margin-top: 90px; background-color: black; color: white;" onclick="setTime()">OK</button>
+        <div style="position: relative; left: 7px; top: -150px;">
+            <h3>Time:</h3>
+            <div style="display: flex; margin-left: 10px;">
+                <input placeholder="Minutes" class="time_t" id="mInput">
+                <input placeholder="Seconds" class="time_t" id="sInput">
+            </div>
+
+        </div>
+
+    </div>
+
+</body>
+
+<script>
+    const capture = `
+    <svg xmlns="http://www.w3.org/2000/svg" style="width: 80px; height: 80px; margin-top: 5px; margin-left: 5px; position: absolute; scale: 1.12;" id="capture">
+        <path
+           style="fill:rgb(0, 0, 255);stroke-width:0.186916; opacity: 0.7;"
+           d="M 0.00,68.92 0.00,57.85 1.20,60.13 c 3.71,7.08 9.24,12.96 16.14,17.20 1.09,0.67 2.60,1.50 3.35,1.85 0.74,0.34 1.35,0.66 1.35,0.71 0,0.04 -4.96,0.08 -11.02,0.08 H 3.24e-4 L 0.00,68.92 Z M 57.94,79.91 c 0,-0.04 0.93,-0.56 2.06,-1.14 7.92,-4.05 14.61,-10.74 18.79,-18.80 l 1.09,-2.11 0.04,10.84 c 0.02,5.96 0.00,10.94 -0.04,11.07 C 79.84,79.94 77.46,80 68.88,80 62.86,80 57.94,79.96 57.94,79.91 Z M 0.00,11.16 0,0 11.16,0.00 22.33,0.00 20.07,1.19 C 16.10,3.27 12.97,5.55 9.64,8.78 6.01,12.30 3.42,15.75 1.19,20.06 L 0.00,22.33 Z M 79.35,21.00 C 78.56,19.27 76.39,15.73 74.84,13.64 74.04,12.56 72.24,10.54 70.85,9.14 67.34,5.64 64.32,3.40 60.11,1.19 L 57.85,0.00 68.92,0.00 80,1.28e-4 V 11.02 c 0,6.06 -0.03,11.02 -0.07,11.02 -0.04,0 -0.29,-0.47 -0.56,-1.04 z"
+           />
+    </svg>`;
+
+    let chessboard = [
+        ['r', 'n', 'b', 'q', 'k', 'b', 'n', 'r'],
+        ['p', 'p', 'p', 'p', 'p', 'p', 'p', 'p'],
+        [' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '],
+        [' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '],
+        [' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '],
+        [' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '],
+        ['P', 'P', 'P', 'P', 'P', 'P', 'P', 'P'],
+        ['R', 'N', 'B', 'Q', 'K', 'B', 'N', 'R']
+    ];
+
+    //MAIUSCOLO = bianco
+    let pieces = [
+        'r', //= torre
+        'n', //= cavallo
+        'b', //= alfiere
+        'q', //= regina
+        'k', //= re
+        'p', //= pedone
+        'R',
+        'N',
+        'B',
+        'Q',
+        'K',
+        'P'
+    ];
+
+    function generateChessboard() {
+        let chessboardElement = document.getElementById('chessboard');
+        for (let row = 0; row < 8; row++) {
+            for (let col = 0; col < 8; col++) {
+                let cell = document.createElement('div');
+                cell.classList.add('cell');
+                if ((row + col) % 2 === 0) {
+                    cell.classList.add('white');
+                } else {
+                    cell.classList.add('black');
+                }
+                cell.id = `${row}-${col}`;
+                chessboardElement.appendChild(cell);
+            }
+        }
+        generateCoordinates();
+    }
+
+    function generateCoordinates() {
+        let coords = {
+            letters: ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H'],
+            numbers: ['1', '2', '3', '4', '5', '6', '7', '8']
+        };
+
+        if (reverse) {
+            coords.letters.reverse();
+            coords.numbers.reverse();
+        }
+        ["letters", "numbers"].forEach(v => {
+            document.querySelector(`#${v}`).innerHTML = coords[v].map(v => `<div>${v}</div>`).join``;
+        });
+    }
+
+    function placePieces() {
+        let chessboardElement = document.getElementById('chessboard');
+        let cells = chessboardElement.getElementsByClassName('cell');
+
+        removeCircle();
+
+        for (let row = 0; row < 8; row++) {
+            for (let col = 0; col < 8; col++) {
+                let index = row * 8 + col;
+                let piece = chessboard[row][col];
+                let cell = cells[index];
+
+                if (piece !== ' ') {
+                    cell.classList.add(`${piece}`);
+                    if (reverseChecked) {
+                        if (alreadyReversed) {
+                            cell.classList.add(`reverseCell`);
+                            alreadyReversed = false;
+                        }
+                    }
+                } else {
+                    var pieceToRemove = document.getElementById(row + "-" + col);
+                    var pieceToRemoveClass = pieceToRemove.className;
+                    var classiMatch = pieceToRemoveClass.match(/(?:\s*|^)([^ \t]+)(?=\s*|$)/g);
+
+                    if (classiMatch) {
+                        classiMatch = classiMatch.filter(function (className) {
+                            return className.trim() !== "reverseCell";
+                        });
+                    }
+
+                    if (classiMatch && classiMatch.length >= 3) {
+                        var pieceToRemoveType = classiMatch[2].trim();
+                        pieceToRemove.classList.remove(pieceToRemoveType);
+                    }
+                }
+            }
+        }
+    }
+
+    generateChessboard();
+    placePieces();
+
+    //----------------------------------------------------------------------------
+
+    function isCellOccupied(x, y) {
+        let row = x;
+        let col = y;
+
+        if (chessboard[row][col] === ' ') {
+            return false;
+        } else {
+            return chessboard[row][col];
+        }
+    }
+
+    function removeCircle() {
+        var circleElements = document.querySelectorAll('.circle');
+
+        circleElements.forEach(function (element) {
+            element.classList.remove('circle');
+        });
+
+        var elementsToRemove = document.querySelectorAll('#capture');
+        elementsToRemove.forEach(function (element) {
+            element.parentNode.removeChild(element);
+        });
+
+    }
+
+    function isEnemyPiece(destinationCell, pieceType) {
+        if (destinationCell != ' ' && pieceType != ' ') {
+            if ((destinationCell === destinationCell?.toUpperCase() && pieceType === pieceType?.toLowerCase()) ||
+                (destinationCell === destinationCell?.toLowerCase() && pieceType === pieceType?.toUpperCase())) {
+                return true;
+            } else {
+                return false;
+            }
+        } else {
+            return false;
+        }
+
+    }
+
+    function findAllPiece(color) {
+        let allPiece = [];
+        for (let i = 0; i < chessboard.length; i++) {
+            for (let j = 0; j < chessboard[i].length; j++) {
+                if (chessboard[i][j] !== ' ') {
+                    if (color === 'white' && chessboard[i][j] === chessboard[i][j].toUpperCase()) {
+                        allPiece.push({ piece: chessboard[i][j], x: i, y: j });
+                    } else if (color === 'black' && chessboard[i][j] === chessboard[i][j].toLowerCase()) {
+                        allPiece.push({ piece: chessboard[i][j], x: i, y: j });
+                    }
+                }
+            }
+        }
+        return allPiece;
+    }
+
+    let scacco = false; //false = non c'è scacco; white = il bianco dà scacco; black = il nero dà scacco
+    var turn = 0; //0 = bianco  1 = nero
+    document.getElementById("chessboard").addEventListener("click", e => {
+        let cell = e.target.id;
+        let classCell = e.target.className;
+        let [x, y] = cell.split('-');
+        let color;
+
+        if (x == "chessboard")
+            return;
+
+        if (cell.includes("capture")) {
+            let parentCell = e.target.parentNode;
+            let [parentX, parentY] = parentCell.id.split('-');
+
+            parentCell.classList.forEach(className => {
+                if (className !== "cell" && className !== "white" && className !== "black") {
+                    parentCell.classList.remove(className);
+                }
+            });
+
+            movePieceTo(parentX, parentY, typePieceSelected);
+            removeCircle();
+            return;
+        }
+
+        classCell = classCell.replace(/\b(cell|black|white|scacco|reverseCell| )\b/g, '');
+
+        if (classCell === classCell.toLowerCase()) { //colore nero
+            color = "black";
+        } else if (classCell === classCell.toUpperCase()) { //colore bianco
+            color = "white";
+        }
+
+        if (classCell.includes("circle")) {
+            movePieceTo(x, y, typePieceSelected);
+            return;
+        }
+
+        if (classCell.includes("scacco")) {
+            classCell = classCell.replace("scacco", "");
+        }
+
+        if (chessboard[x][y] === ' ') {
+            removeCircle();
+            prevCell = '';
+            return;
+        }
+
+
+        if (classCell == '') {
+            return;
+        }
+
+        console.log("Piece: " + classCell + ", Color: " + color + ", X: " + x + ", Y: " + y);
+        selectPiece(classCell, x, y, true);
+    });
+
+    var typePieceSelected;
+    var colorPieceSelected;
+    var xPieceSelected;
+    var yPieceSelected;
+    function selectPiece(pieceType, x, y, display) {
+
+        if (pieceType === pieceType.toLowerCase()) { //colore nero
+            color = "black";
+        } else if (pieceType === pieceType.toUpperCase()) { //colore bianco
+            color = "white";
+        }
+
+
+        if (!((turn == 0 && color === 'white') || (turn == 1 && color === 'black')) && display) {
+            return;
+            prevCell = "";
+        }
+
+        if (!move) {
+            return;
+        }
+
+        if (display) {
+            colorPieceSelected = color;
+            typePieceSelected = pieceType;
+            xPieceSelected = x;
+            yPieceSelected = y;
+        }
+
+        var pieceTypeL = pieceType.toLowerCase();
+        switch (pieceTypeL) {
+            case 'p':
+                if ((color === 'white' && x == 6) || (color === 'black' && x == 1)) { //Pedone in cella iniziale
+                    moves = [
+                        { dx: color === 'white' ? -1 : 1, dy: 0 },
+                        { dx: color === 'white' ? -2 : 2, dy: 0 }
+                    ];
+                } else {
+                    moves = [
+                        { dx: color === 'white' ? -1 : 1, dy: 0 }
+                    ];
+                }
+
+                break;
+            case 'q':
+                moves = [
+                    { dx: 1, dy: 0 },
+                    { dx: -1, dy: 0 },
+                    { dx: 0, dy: 1 },
+                    { dx: 0, dy: -1 },
+                    { dx: 1, dy: 1 },
+                    { dx: -1, dy: 1 },
+                    { dx: 1, dy: -1 },
+                    { dx: -1, dy: -1 }
+                ];
+                break;
+
+            case 'k':
+                moves = [
+                    { dx: 1, dy: 0 },
+                    { dx: -1, dy: 0 },
+                    { dx: 0, dy: 1 },
+                    { dx: 0, dy: -1 },
+                    { dx: 1, dy: 1 },
+                    { dx: -1, dy: 1 },
+                    { dx: 1, dy: -1 },
+                    { dx: -1, dy: -1 }
+                ];
+                break;
+
+            case 'n':
+                moves = [
+                    { dx: 2, dy: 1 },
+                    { dx: 1, dy: 2 },
+                    { dx: -1, dy: 2 },
+                    { dx: -2, dy: 1 },
+                    { dx: -2, dy: -1 },
+                    { dx: -1, dy: -2 },
+                    { dx: 1, dy: -2 },
+                    { dx: 2, dy: -1 }
+                ];
+                break;
+
+            case 'b':
+                moves = [
+                    { dx: 1, dy: 1 },
+                    { dx: 1, dy: -1 },
+                    { dx: -1, dy: 1 },
+                    { dx: -1, dy: -1 }
+                ];
+                break;
+
+            case 'r':
+                moves = [
+                    { dx: 1, dy: 0 },
+                    { dx: -1, dy: 0 },
+                    { dx: 0, dy: 1 },
+                    { dx: 0, dy: -1 }
+                ];
+                break;
+
+            default:
+                console.log('Tipo di pezzo non gestito: ', pieceType);
+                return;
+        }
+
+        if (display) {
+            moveAllowed(pieceType, color, x, y, moves, display);
+        } else {
+            return moveAllowed(pieceType, color, x, y, moves, display);
+        }
+    }
+
+    var circlesDisplayed = false;
+    var prevCell;
+    var moveKBC = false; //arrocco corto
+    var moveKWC = false;
+    var moveKBL = false; //arrocco lungo
+    var moveKWL = false;
+    var castlingC = {}; //Memorizza le celle dove è possibile l'arrocco
+    var castlingL = {};
+    var enPassant = { x: "", y: "", possible: false }; //Posizione dell'arversario che rende possibile enpassant
+    var cellEnPassant = {}; //Posizione dove è possibile en passant
+    var contaTurni = 0;
+    var turnoEnPassant;
+    function moveAllowed(pieceType, color, x, y, moves, display) {
+        var pieceTypeL = pieceType.toLowerCase();
+        var capturePieces = [];
+        var moveAllowedArray = [];
+
+        x = parseInt(x);
+        y = parseInt(y);
+        if (display) {
+            removeCircle();
+            castlingC = {};
+            castlingL = {};
+        }
+
+        outerLoop:
+        for (let move of moves) {
+            let newX = x;
+            let newY = y;
+            while (true) {
+                newX += move.dx;
+                newY += move.dy;
+                if (newX < 0 || newX > 7 || newY < 0 || newY > 7) {
+                    break;
+                }
+
+                if (pieceType.toLowerCase() === "p") {
+                    const captureOffsets = {
+                        white: [[-1, -1], [-1, 1]],
+                        black: [[1, -1], [1, 1]]
+                    };
+
+                    const offsets = captureOffsets[color];
+
+                    for (let offset of offsets) {
+                        const captureX = x + offset[0];
+                        const captureY = y + offset[1];
+
+                        if (chessboard[captureX][captureY] !== ' ') {
+                            if (isEnemyPiece(chessboard[captureX][captureY], pieceType) && chessboard[captureX][captureY] != null) {
+                                capturePieces.push({ x: captureX, y: captureY });
+                            }
+                        }
+                    }
+                }
+
+                var destinationCell = document.getElementById(newX + "-" + newY);
+                var destinationCellOccupated = isCellOccupied(newX, newY);
+                if (!destinationCellOccupated) {
+                    moveAllowedArray.push({ x: newX, y: newY });
+                } else {
+                    if (pieceTypeL != "p") {
+                        if (isEnemyPiece(destinationCellOccupated, pieceType)) {
+                            destinationCellOccupatedL = destinationCellOccupated.toLocaleLowerCase();
+                            capturePieces.push({ x: newX, y: newY });
+                        }
+                    }
+                    if (pieceTypeL == "p") {
+                        break outerLoop; //Interrompe il ciclo esterno se un pedone è ostacolato da un pezzo
+                    }
+                    break; // Esci dal ciclo while
+
+                }
+
+                // Se il pezzo è un pedone, un re o un cavallo, non estendere le posizioni permesse
+                if (pieceTypeL === "p" || pieceTypeL === "k" || pieceTypeL === "n") {
+                    break; // Esci dal ciclo while
+                }
+            }
+        }
+
+        if (display) {
+            var svg = new DOMParser().parseFromString(capture, 'image/svg+xml').querySelector('svg');
+
+            //Arrocco
+            if (pieceType.toLowerCase() == "k") {
+                if ((chessboard[x][y + 1] == ' ' && chessboard[x][y + 2] == ' ') && ((color == "white" && !moveKWC) || (color == "black" && !moveKBC)) && !check) {
+                    moveAllowedArray.push({ x: x, y: (y + 2) });
+                    castlingC = { x: x, y: (y + 2) };
+                }
+
+                if ((chessboard[x][y - 1] == ' ' && chessboard[x][y - 2] == ' ') && ((color == "white" && !moveKWL) || (color == "black" && !moveKBL)) && !check) {
+                    moveAllowedArray.push({ x: x, y: (y - 2) });
+                    castlingL = { x: x, y: (y - 2) };
+                }
+            }
+
+            //En passant
+            let posDoppiaMossa;
+            if (pieceType.toLowerCase() == "p") {
+                let mossaInizialePedone;
+
+                if (color == "white") {
+                    posDoppiaMossa = x - 2;
+                } else {
+                    posDoppiaMossa = x + 2;
+                }
+                mossaInizialePedone = moveAllowedArray.find(o => o.x === (posDoppiaMossa)); //Cerca la doppia mossa del pedone in moveAllowedArray
+
+                if (mossaInizialePedone) {
+                    enPassant.x = posDoppiaMossa; //Posizione della doppia mossa con la quale l'en passant diventa possibile
+                    enPassant.y = y;
+                } else {
+                    enPassant.x = "";
+                    enPassant.y = "";
+                }
+            }
+
+            if (pieceType.toLowerCase() == "p" && enPassant.possible == colorPieceSelected) {
+
+                if (turnoEnPassant < contaTurni) {
+                    enPassant.possible = false;
+                    turnoEnPassant = "";
+                } else {
+                    console.log("En passant possibile");
+                    if (color == "white") {
+                        posEnPassantx = x - 1;
+                    } else {
+                        posEnPassantx = x + 1;
+                    }
+                    if (chessboard[x][y - 1]?.toLowerCase() == "p" && isEnemyPiece(chessboard[x][y - 1], pieceType)) {
+                        moveAllowedArray.push({ x: (posEnPassantx), y: (y - 1) });
+                        cellEnPassant.x = (posEnPassantx);
+                        cellEnPassant.y = (y - 1);
+                    } else if (chessboard[x][y + 1]?.toLowerCase() == "p" && isEnemyPiece(chessboard[x][y + 1], pieceType)) {
+                        moveAllowedArray.push({ x: (posEnPassantx), y: (y + 1) });
+                        cellEnPassant.x = (posEnPassantx);
+                        cellEnPassant.y = (y + 1);
+                    }
+
+                    if (!turnoEnPassant) {
+                        turnoEnPassant = contaTurni + 1;
+                    }
+                }
+            }
+
+            moveAllowedArray = moveAllowedArray.filter(v => !moveAllowedCheck(v, colorPieceSelected, typePieceSelected, xPieceSelected, yPieceSelected));
+            capturePieces = capturePieces.filter(v => !moveAllowedCheck(v, colorPieceSelected, typePieceSelected, xPieceSelected, yPieceSelected));
+
+            if (circlesDisplayed && prevCell == x + "-" + y) {
+                removeCircle();
+                circlesDisplayed = false;
+                return;
+            }
+
+            moveAllowedArray.forEach(el => {
+                element = document.getElementById(el.x + '-' + el.y);
+                element.classList.add("circle");
+                circlesDisplayed = true;
+            });
+
+            capturePieces.forEach(el => {
+                element = document.getElementById(el.x + '-' + el.y);
+                if (chessboard[el.x][el.y].toLowerCase() != "k") {
+                    element.appendChild(svg.cloneNode(true));
+                    circlesDisplayed = true;
+                }
+            });
+
+            prevCell = x + "-" + y;
+        } else {
+            return [capturePieces, moveAllowedArray];
+        }
+    }
+
+    var plReverse = false;
+    function movePieceTo(x, y, typePiece) {
+        /*if (!moveAllowedArray.some(function (el) {
+            return el.id.includes(x + "-" + y);
+        })) {
+            return;
+        }*/
+        move = true;
+        if (((turn == 0 && colorPieceSelected === 'white') || (turn == 1 && colorPieceSelected === 'black')) || !move) {
+            chessboard[x][y] = typePiece;
+            chessboard[xPieceSelected][yPieceSelected] = ' ';
+
+            var scaccoPos = document.querySelectorAll('.scacco');
+
+            scaccoPos.forEach(function (element) {
+                element.classList.remove('scacco');
+            });
+
+            //Arrocco
+            if (typePiece == "r") {
+                if (xPieceSelected == 0 && yPieceSelected == 7) {
+                    moveKBC = true; //Il re non può più arroccare lato corto
+                } else if (xPieceSelected == 0 && yPieceSelected == 0) {
+                    moveKBL = true; //Il re non può più arroccare lato lungo
+                }
+            } else if (typePiece == "k") {
+                moveKBC = true;
+                moveKBL = true;
+            }
+
+            if (typePiece === "R") {
+                if (xPieceSelected == 7 && yPieceSelected == 7) {
+                    moveKWC = true;
+                } else if (xPieceSelected == 7 && yPieceSelected == 0) {
+                    moveKWL = true;
+                }
+            } else if (typePiece === "K") {
+                moveKWC = true;
+                moveKWL = true;
+            }
+
+            if (typePiece.toLowerCase() == "k") {
+                if (castlingC.x == x && castlingC.y == y) {
+                    if (colorPieceSelected == "white") {
+                        chessboard[7][7] = ' ';
+                        chessboard[7][5] = 'R';
+                    } else if (colorPieceSelected == "black") {
+                        chessboard[0][7] = ' ';
+                        chessboard[0][5] = 'r';
+                    }
+                } else if (castlingL.x == x && castlingL.y == y) {
+                    if (colorPieceSelected == "white") {
+                        chessboard[7][0] = ' ';
+                        chessboard[7][3] = 'R';
+                    } else if (colorPieceSelected == "black") {
+                        chessboard[0][0] = ' ';
+                        chessboard[0][3] = 'r';
+                    }
+                }
+            }
+
+            //En passant
+            if (enPassant.x == x && enPassant.y == y) {
+                if (((chessboard[parseInt(x)][parseInt(y - 1)]?.toString().toLowerCase() == "p") || (chessboard[parseInt(x)][parseInt(y) + 1]?.toString().toLowerCase() == "p")) && isEnemyPiece(chessboard[parseInt(x)][parseInt(y) + 1], typePieceSelected)) {
+                    enPassant.possible = (colorPieceSelected == "white") ? "black" : "white";
+                    enPassant.x = "";
+                    enPassant.y = "";
+                }
+            }
+
+            if (cellEnPassant.x == x && cellEnPassant.y == y) {
+                if (chessboard[x - 1][y].toLowerCase() == "p") {
+                    chessboard[x - 1][y] = ' ';
+                } else if (chessboard[parseInt(x) + 1][y].toLowerCase() == "p") {
+                    chessboard[parseInt(x) + 1][y] = ' ';
+                }
+
+            }
+
+            placePieces();
+            verifyCheckReceived(colorPieceSelected, false);
+
+            if (typePiece.toLowerCase() == "p") {
+                if (colorPieceSelected == 'white' && x == 0) {
+                    promotion(x, y);
+                } else if (colorPieceSelected == 'black' && x == 7) {
+                    promotion(x, y);
+                }
+            }
+            if (move) {
+                turn = 1 - turn; //0 = bianco
+                if (timedGameSelected) {
+                    startTimer(turn);
+                }
+                if (reverseChecked) {
+                    reverseBoard();
+                }
+            }
+            contaTurni++;
+        } else {
+            console.log("Turno sbagliato");
+        }
+    }
+
+    var check;
+    function verifyCheckReceived(color, testing) {
+        check = false;
+
+        let allPiece = findAllPiece(color);
+
+        allPiece.forEach(function (el) {
+            var [capturePieces, moveAllowedArray] = selectPiece(el.piece, el.x, el.y, false);
+            if (capturePieces) {
+                for (let e of capturePieces) {
+                    if (chessboard[e.x][e.y].toLowerCase() == "k") {
+                        if (!testing) {
+                            console.log("SCACCO in " + e.x + "-" + e.y);
+                            var checkCell = document.getElementById(e.x + "-" + e.y);
+                            checkCell.classList.add("scacco");
+                            scacco = color;
+                            verifyCheckmate();
+                        }
+                        check = true;
+                    }
+                }
+            }
+        });
+        return check;
+    }
+
+    function moveAllowedCheck(moveAllowedElement, color, typePiece, x, y) { //Verifica se il colore opposto può fare scacco con una determinata mossa
+        var oppositeColor = color == "white" ? "black" : "white";
+        var tempChessboard = JSON.parse(JSON.stringify(chessboard)); // Clona la chessboard
+
+        var check;
+
+        var xM = moveAllowedElement.x;
+        var yM = moveAllowedElement.y;
+
+        chessboard[x][y] = ' ';
+        chessboard[xM][yM] = typePiece;
+
+        check = verifyCheckReceived(oppositeColor, true);
+
+        if (check) {
+            console.log("CHECK");
+        }
+
+        chessboard = tempChessboard;
+        return check;
+    }
+
+    function verifyCheckmate() {
+        var c = 0;
+        var oppositeColor = colorPieceSelected == "white" ? "black" : "white";
+        var check = false;
+
+        let allPiece = findAllPiece(oppositeColor);
+
+        allPiece.forEach(function (el) { //Verifico se l'avversario può fare qualche mossa
+            var [capturePieces, moveAllowedArray] = selectPiece(el.piece, el.x, el.y, false);
+
+            moveAllowedArray = moveAllowedArray.filter(v => !moveAllowedCheck(v, oppositeColor, el.piece, el.x, el.y));
+            capturePieces = capturePieces.filter(v => !moveAllowedCheck(v, oppositeColor, el.piece, el.x, el.y));
+
+            if (capturePieces.length == 0 && moveAllowedArray.length == 0) {
+                c++;
+            }
+        });
+
+        if (c == allPiece.length) {
+            alert(colorPieceSelected.toUpperCase() + " win");
+            move = false;
+            clearInterval(intervallo);
+        }
+    }
+
+    var move = true;
+    function promotion(x, y) {
+        var divPromoteContainer = document.createElement("div");
+        divPromoteContainer.setAttribute("id", "divPromoteContainer");
+        document.body.appendChild(divPromoteContainer);
+
+        move = false;
+
+        let pieces = [...'RNBQ'];
+        if (colorPieceSelected == 'black') {
+            pieces = pieces.map(v => v.toLowerCase());
+        }
+
+        divPromoteContainer.innerHTML = pieces.map(piece => `
+            <div class="divPromote ${piece}" id="${piece}"></div>
+        `).join('');
+
+        document.body.appendChild(divPromoteContainer);
+
+        document.querySelectorAll('.divPromote').forEach(div => {
+            div.addEventListener('click', () => {
+                divPromoteContainer.remove();
+                movePieceTo(x, y, div.id);
+                var classToRemove = document.getElementById(`${x}-${y}`);
+                classToRemove.classList.remove(colorPieceSelected == 'white' ? 'P' : 'p');
+            });
+        });
+    }
+
+    var checkboxReverse = document.getElementById("checkboxReverse");
+    checkboxReverse.addEventListener('change', function () {
+        if (this.checked) {
+            reverseBoard(true);
+            reverseChecked = true;
+        } else {
+            reverseBoard(false);
+            reverseChecked = false;
+        }
+    });
+
+    var reverseChecked = false;
+    var reverse = true;
+    var alreadyReversed = false;
+    function reverseBoard() {
+        var chessboardTable = document.getElementById("chessboard");
+        var cell = document.querySelectorAll('.cell');
+
+        setTimeout(() => {
+            if (turn == 0 && !reverse) {
+                reverse = true;
+            } else if (turn == 1 && reverse) {
+                reverse = false;
+            }
+
+            if (contaTurni == 0) {
+                reverse = true;
+            }
+
+            if (!reverse) {
+                chessboardTable.style.transform = "scale(-1)";
+                timerContainer.classList.add("reverseTimer");
+                alreadyReversed = true;
+                cell.forEach(function (el) {
+                    el.classList.add("reverseCell");
+                });
+                reverse = true;
+            } else {
+                chessboardTable.style.transform = "scale(1)";
+                timerContainer.classList.remove("reverseTimer");
+                cell.forEach(function (el) {
+                    el.classList.remove("reverseCell");
+                });
+                reverse = false;
+            }
+            generateCoordinates();
+        }, 500);
+    }
+
+    var checkboxTimedGame = document.getElementById("checkboxTimedGame");
+    var timerAlertContainer = document.querySelector(".timerAlertContainer");
+    var timerContainer = document.getElementById("timerContainer");
+    var timedGameSelected = false;
+    checkboxTimedGame.addEventListener('change', function () {
+        if (this.checked) {
+            timerAlertContainer.classList.remove("hide");
+            document.getElementById("mInput").focus();
+            timedGameSelected = true;
+        } else {
+            timerAlertContainer.classList.add("hide");
+            timerContainer.classList.add("hide");
+            timedGameSelected = false;
+            document.querySelector(".chessboardContainer").classList.remove("switchChessboard");
+        }
+    });
+
+    var m, s;
+    function setTime() {
+        m = document.querySelector("#mInput").value;
+        s = document.querySelector("#sInput").value;
+
+        var minW = document.querySelector("#minW");
+        var secW = document.querySelector("#secW");
+        var minB = document.querySelector("#minB");
+        var secB = document.querySelector("#secB");
+
+        if ((m != '' || s != '') && m < 100 && s < 60 && (m > 0 || s > 0)) {
+            timerAlertContainer.classList.add("hide");
+            timerContainer.classList.remove("hide");
+
+            minW.textContent = String(m).padStart(2, '0') + ":";
+            secW.textContent = String(s).padStart(2, '0');
+            minB.textContent = String(m).padStart(2, '0') + ":";
+            secB.textContent = String(s).padStart(2, '0');
+            document.querySelector(".chessboardContainer").classList.add("switchChessboard");
+        }
+
+    }
+
+    var prevTurn = turn;
+    var intervallo;
+    function startTimer(turno) {
+        var color;
+
+        if (prevTurn != turno) {
+            clearInterval(intervallo);
+        }
+
+        if (turno == 0) {
+            color = "W";
+        } else {
+            color = "B";
+        }
+
+        var minuti = document.getElementById("min" + color);
+        var secondi = document.getElementById("sec" + color);
+
+        var tempoIniziale = parseInt(minuti.textContent) * 60 + parseInt(secondi.textContent);
+
+        var minutiRimanenti = Math.floor(tempoIniziale / 60);
+        var secondiRimanenti = tempoIniziale % 60;
+
+        intervallo = setInterval(() => {
+
+            if (secondiRimanenti > 0) {
+                tempoIniziale--;
+                secondiRimanenti--;
+            } else {
+                minutiRimanenti--;
+                secondiRimanenti = 59;
+            }
+
+            minuti.textContent = String(minutiRimanenti).padStart(2, '0') + ":";
+            secondi.textContent = String(secondiRimanenti).padStart(2, '0');
+
+            var vincitore = color == "B" ? "White" : "Black";
+
+            if (tempoIniziale == 0) {
+                clearInterval(intervallo);
+                alert(vincitore.toUpperCase() + " win");
+                move = false;
+                clearInterval(intervallo);
+            }
+        }, 1000);
+
+        prevTurn = turno;
+    }
+
+</script>
+
+</html>
+
+</html>
