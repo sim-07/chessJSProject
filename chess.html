@@ -516,7 +516,7 @@
                 }
             }
 
-            //En passant
+            //Calcola la mossa del pedone necessaria per rendere possibile l'en passant al turno dopo
             let posDoppiaMossa;
             if (pieceType.toLowerCase() == "p") {
                 let mossaInizialePedone;
@@ -529,17 +529,16 @@
                 mossaInizialePedone = moveAllowedArray.find(o => o.x === (posDoppiaMossa)); //Cerca la doppia mossa del pedone in moveAllowedArray
 
                 if (mossaInizialePedone) {
-                    enPassant.x = posDoppiaMossa; //Posizione della doppia mossa con la quale l'en passant diventa possibile
+                    enPassant.x = posDoppiaMossa;
                     enPassant.y = y;
-                } else {
-                    enPassant.x = "";
-                    enPassant.y = "";
+                    
                 }
             }
 
+            //Controlla se l'en passant è possibile e lo mette in moveAllowedArray
             if (pieceType.toLowerCase() == "p" && enPassant.possible == colorPieceSelected) {
 
-                if (turnoEnPassant < contaTurni) {
+                if (turnoEnPassant < contaTurni) { //Controlla se il turno in cui l'en passant era possibile è già passato
                     enPassant.possible = false;
                     turnoEnPassant = "";
                 } else {
@@ -549,19 +548,16 @@
                     } else {
                         posEnPassantx = x + 1;
                     }
-                    if (chessboard[x][y - 1]?.toLowerCase() == "p" && isEnemyPiece(chessboard[x][y - 1], pieceType)) {
+                    if (chessboard[x][y - 1]?.toLowerCase() == "p" && isEnemyPiece(chessboard[x][y - 1], pieceType) && x == enPassant.x && y-1 == enPassant.y) {
                         moveAllowedArray.push({ x: (posEnPassantx), y: (y - 1) });
                         cellEnPassant.x = (posEnPassantx);
                         cellEnPassant.y = (y - 1);
-                    } else if (chessboard[x][y + 1]?.toLowerCase() == "p" && isEnemyPiece(chessboard[x][y + 1], pieceType)) {
+                    } else if (chessboard[x][y + 1]?.toLowerCase() == "p" && isEnemyPiece(chessboard[x][y + 1], pieceType) && x == enPassant.x && y+1 == enPassant.y) {
                         moveAllowedArray.push({ x: (posEnPassantx), y: (y + 1) });
                         cellEnPassant.x = (posEnPassantx);
                         cellEnPassant.y = (y + 1);
                     }
 
-                    if (!turnoEnPassant) {
-                        turnoEnPassant = contaTurni + 1;
-                    }
                 }
             }
 
@@ -596,11 +592,7 @@
 
     var plReverse = false;
     function movePieceTo(x, y, typePiece) {
-        /*if (!moveAllowedArray.some(function (el) {
-            return el.id.includes(x + "-" + y);
-        })) {
-            return;
-        }*/
+
         move = true;
         if (((turn == 0 && colorPieceSelected === 'white') || (turn == 1 && colorPieceSelected === 'black')) || !move) {
             chessboard[x][y] = typePiece;
@@ -656,14 +648,16 @@
             }
 
             //En passant
-            if (enPassant.x == x && enPassant.y == y) {
-                if (((chessboard[parseInt(x)][parseInt(y - 1)]?.toString().toLowerCase() == "p") || (chessboard[parseInt(x)][parseInt(y) + 1]?.toString().toLowerCase() == "p")) && isEnemyPiece(chessboard[parseInt(x)][parseInt(y) + 1], typePieceSelected)) {
+            if (enPassant.x == x && enPassant.y == y) { //Vede se il pedone viene mosso nella posizione in cui rende possibile l'en passant (calcolata in moveAllowed)
+
+                //Controlla se di fianco al pedone mosso c'è un pedone avversario. Se si, l'en passant diventa possibile
+                if ((chessboard[parseInt(x)][parseInt(y - 1)]?.toString().toLowerCase() == "p" && isEnemyPiece(chessboard[parseInt(x)][parseInt(y) - 1], typePieceSelected)) || (chessboard[parseInt(x)][parseInt(y) + 1]?.toString().toLowerCase() == "p") && isEnemyPiece(chessboard[parseInt(x)][parseInt(y) + 1], typePieceSelected)) {
                     enPassant.possible = (colorPieceSelected == "white") ? "black" : "white";
-                    enPassant.x = "";
-                    enPassant.y = "";
+                    turnoEnPassant = contaTurni + 1;
                 }
             }
 
+            //Mangia il pedone tramite en passant
             if (cellEnPassant.x == x && cellEnPassant.y == y) {
                 if (chessboard[x - 1][y].toLowerCase() == "p") {
                     chessboard[x - 1][y] = ' ';
