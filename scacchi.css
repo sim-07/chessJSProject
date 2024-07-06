@@ -62,6 +62,38 @@ button:active {
     padding: 20px 13px 16px 21px;
 }
 
+#numbers {
+    width: 90px;
+    top: -813px;
+    left: 719px;
+    display: flex;
+    position: relative;
+    flex-direction: column-reverse;
+}
+
+#letters {
+    top: 7px;
+    width: 720px;
+    height: 90px;
+    left: -1px;
+    display: flex;
+    position: relative;
+}
+
+#letters div,
+#numbers div {
+    width: 92px;
+    height: 92px;
+    display: inline-block;
+    line-height: 80px;
+    text-align: center;
+}
+
+#chessboard {
+    width: 720px;
+    cursor: pointer;
+}
+
 .divPromote {
     width: 110px;
     height: 90px;
@@ -71,7 +103,7 @@ button:active {
 }
 
 .hide {
-    display: none !important;
+    display: none;
 }
 
 .P {
@@ -152,6 +184,20 @@ button:active {
     background-position: 9px 9px;
 }
 
+.arrowContainer {
+    display: flex;
+    width: 745px;
+}
+
+.arrows {
+    width: 50%;
+    padding: 5px;
+    background-color: #c9c9c9;
+    text-align: center;
+    cursor: pointer;
+    margin-right: 25px;
+}
+
 .scacco {
     background-color: red !important;
 }
@@ -170,39 +216,6 @@ button:active {
 .black {
     background-color: #b58863;
     color: white;
-}
-
-
-#numbers {
-    width: 90px;
-    top: -813px;
-    left: 719px;
-    display: flex;
-    position: relative;
-    flex-direction: column-reverse;
-}
-
-#letters {
-    top: 7px;
-    width: 720px;
-    height: 90px;
-    left: -1px;
-    display: flex;
-    position: relative;
-}
-
-#letters div,
-#numbers div {
-    width: 92px;
-    height: 92px;
-    display: inline-block;
-    line-height: 80px;
-    text-align: center;
-}
-
-#chessboard {
-    width: 720px;
-    cursor: pointer;
 }
 
 .chessboardContainer {
