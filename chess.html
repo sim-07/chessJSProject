@@ -11,6 +11,10 @@
 
 <body>
     <div class="chessboardContainer">
+        <div class="arrowContainer">
+            <p id="arrowLeft" class="arrows" onclick="viewPreviousMoves(this)">&lt;</p>
+            <p id="arrowRight" class="arrows" onclick="viewPreviousMoves(this)">&gt;</p>
+        </div>
         <div id="chessboard"></div>
         <div id="letters"></div>
         <div id="numbers"></div>
@@ -148,7 +152,8 @@
         });
     }
 
-    function placePieces() {
+    var moveHistory = [];
+    function placePieces(chessboardToShow) {
         let chessboardElement = document.getElementById('chessboard');
         let cells = chessboardElement.getElementsByClassName('cell');
 
@@ -157,10 +162,26 @@
         for (let row = 0; row < 8; row++) {
             for (let col = 0; col < 8; col++) {
                 let index = row * 8 + col;
-                let piece = chessboard[row][col];
+                let piece = chessboardToShow[row][col];
                 let cell = cells[index];
 
+                var pieceToRemove = document.getElementById(row + "-" + col);
+                var pieceToRemoveClass = pieceToRemove.className;
+                var classiMatch = pieceToRemoveClass.match(/(?:\s*|^)([^ \t]+)(?=\s*|$)/g);
+
+                if (classiMatch) {
+                    classiMatch = classiMatch.filter(function (className) {
+                        return className.trim() !== "reverseCell";
+                    });
+                }
+
+                if (classiMatch && classiMatch.length >= 3) {
+                    var pieceToRemoveType = classiMatch[2].trim();
+                    pieceToRemove.classList.remove(pieceToRemoveType);
+                }
+
                 if (piece !== ' ') {
+
                     cell.classList.add(`${piece}`);
                     if (reverseChecked) {
                         if (alreadyReversed) {
@@ -168,28 +189,14 @@
                             alreadyReversed = false;
                         }
                     }
-                } else {
-                    var pieceToRemove = document.getElementById(row + "-" + col);
-                    var pieceToRemoveClass = pieceToRemove.className;
-                    var classiMatch = pieceToRemoveClass.match(/(?:\s*|^)([^ \t]+)(?=\s*|$)/g);
-
-                    if (classiMatch) {
-                        classiMatch = classiMatch.filter(function (className) {
-                            return className.trim() !== "reverseCell";
-                        });
-                    }
-
-                    if (classiMatch && classiMatch.length >= 3) {
-                        var pieceToRemoveType = classiMatch[2].trim();
-                        pieceToRemove.classList.remove(pieceToRemoveType);
-                    }
                 }
             }
         }
     }
 
+    moveHistory.push(JSON.parse(JSON.stringify(chessboard)));
     generateChessboard();
-    placePieces();
+    placePieces(chessboard);
 
     //----------------------------------------------------------------------------
 
@@ -444,6 +451,10 @@
             castlingL = {};
         }
 
+        if (indexMoves+1 < moveHistory.length) {
+            return;
+        }
+
         outerLoop:
         for (let move of moves) {
             let newX = x;
@@ -531,7 +542,7 @@
                 if (mossaInizialePedone) {
                     enPassant.x = posDoppiaMossa;
                     enPassant.y = y;
-                    
+
                 }
             }
 
@@ -548,11 +559,11 @@
                     } else {
                         posEnPassantx = x + 1;
                     }
-                    if (chessboard[x][y - 1]?.toLowerCase() == "p" && isEnemyPiece(chessboard[x][y - 1], pieceType) && x == enPassant.x && y-1 == enPassant.y) {
+                    if (chessboard[x][y - 1]?.toLowerCase() == "p" && isEnemyPiece(chessboard[x][y - 1], pieceType) && x == enPassant.x && y - 1 == enPassant.y) {
                         moveAllowedArray.push({ x: (posEnPassantx), y: (y - 1) });
                         cellEnPassant.x = (posEnPassantx);
                         cellEnPassant.y = (y - 1);
-                    } else if (chessboard[x][y + 1]?.toLowerCase() == "p" && isEnemyPiece(chessboard[x][y + 1], pieceType) && x == enPassant.x && y+1 == enPassant.y) {
+                    } else if (chessboard[x][y + 1]?.toLowerCase() == "p" && isEnemyPiece(chessboard[x][y + 1], pieceType) && x == enPassant.x && y + 1 == enPassant.y) {
                         moveAllowedArray.push({ x: (posEnPassantx), y: (y + 1) });
                         cellEnPassant.x = (posEnPassantx);
                         cellEnPassant.y = (y + 1);
@@ -590,6 +601,8 @@
         }
     }
 
+
+    var indexMoves = 0;
     var plReverse = false;
     function movePieceTo(x, y, typePiece) {
 
@@ -627,6 +640,7 @@
                 moveKWL = true;
             }
 
+            // Arrocco
             if (typePiece.toLowerCase() == "k") {
                 if (castlingC.x == x && castlingC.y == y) {
                     if (colorPieceSelected == "white") {
@@ -667,7 +681,9 @@
 
             }
 
-            placePieces();
+            indexMoves++;
+            moveHistory.push(JSON.parse(JSON.stringify(chessboard)));
+            placePieces(chessboard);
             verifyCheckReceived(colorPieceSelected, false);
 
             if (typePiece.toLowerCase() == "p") {
@@ -841,6 +857,23 @@
             }
             generateCoordinates();
         }, 500);
+    }
+
+
+    function viewPreviousMoves(direction) {
+
+        if (moveHistory.length > 0) {
+            if (direction.id == "arrowLeft") {
+                if (indexMoves > 0) {
+                    indexMoves--;
+                    placePieces(moveHistory[indexMoves]);
+                }
+            } else if (direction.id == "arrowRight" && indexMoves + 1 < moveHistory.length) {
+                indexMoves++;
+                placePieces(moveHistory[indexMoves]);
+            }
+        }
+
     }
 
     var checkboxTimedGame = document.getElementById("checkboxTimedGame");
